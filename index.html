@@ -2,313 +2,259 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mr. Gilbert's Computing Class</title>
     <style>
-        /* 1. LAYOUT & BACKGROUND */
+        /* Base Setup & Anime Background */
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: 'Arial', sans-serif;
-            background: #2c3e50; /* Fallback color */
-            background-image: url('https://wallpaperaccess.com/full/744155.jpg'); /* Anime Classroom */
+            background: url('https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
             background-size: cover;
-            background-position: center;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
         }
 
-        /* 2. CENTERED CHALKBOARD */
-        .board-container {
+        /* Top Bar - Presentation Upload */
+        .top-bar {
+            width: 100%; text-align: center; padding-top: 15px;
+        }
+
+        /* The Main Board (Center) */
+        .board-wrapper {
             position: relative;
-            width: 80%;
-            max-width: 900px;
-            height: 500px;
-            background: #1e3d2f; /* Dark chalkboard green */
-            border: 15px solid #5d4037; /* Wooden frame */
-            border-radius: 10px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            width: 850px; height: 480px;
+            background: #1e3d2f; /* Chalkboard Green */
+            border: 18px solid #5d4037; /* Wooden Frame */
+            border-radius: 12px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.7);
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            text-align: center;
+            align-items: center;
             color: white;
-            transition: transform 0.3s ease;
             z-index: 5;
         }
 
-        .chalk-title {
-            font-size: 80px;
+        .board-title {
+            font-size: 85px;
             font-family: 'Comic Sans MS', cursive;
+            font-weight: bold;
             margin: 0;
-            font-weight: bold;
-            text-decoration: underline white 5px; /* Chalk underline strike */
+            text-decoration: underline wavy white 6px; /* Chalk strike */
         }
 
-        .chalk-subtitle {
-            font-size: 40px;
-            margin-top: 10px;
+        .board-subtitle {
+            font-size: 45px; margin: 10px 0;
         }
 
-        #class-status-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 10px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 5px;
-            font-weight: bold;
+        /* Left Side - Seating Button */
+        .left-controls {
+            position: absolute; left: 40px; top: 40%;
         }
 
-        /* 3. SIDE PANELS (Timer & Seating) */
-        .side-panel {
-            position: absolute;
-            top: 50px;
-            width: 150px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            text-align: center;
+        /* Right Side - Timer */
+        .right-controls {
+            position: absolute; right: 40px; top: 40%;
+            background: rgba(255,255,255,0.9);
+            padding: 20px; border-radius: 15px;
+            text-align: center; width: 150px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .left-side { left: 30px; }
-        .right-side { right: 30px; }
 
-        /* 4. BOTTOM BUTTON BOXES */
+        .timer-val { font-size: 35px; font-weight: bold; color: #d32f2f; margin-bottom: 10px; }
+
+        /* Bottom Controls - Clickable Option Boxes */
         .bottom-nav {
-            position: absolute;
-            bottom: 30px;
-            display: flex;
-            gap: 15px;
-            background: rgba(255,255,255,0.2);
-            padding: 15px;
-            border-radius: 15px;
-            backdrop-filter: blur(5px);
+            display: flex; gap: 15px; margin-bottom: 40px;
+            background: rgba(0,0,0,0.4); padding: 15px; border-radius: 15px;
         }
 
         .box-btn {
-            width: 120px;
-            height: 80px;
-            background: white;
-            border: 3px solid #5d4037;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .box-btn:hover {
-            background: #ffecb3;
-            transform: translateY(-5px);
-        }
-
-        /* 5. COMPONENTS */
-        #studentCanvas {
-            position: absolute;
-            top: 0; left: 0;
-            display: none;
-            cursor: crosshair;
-        }
-
-        #seating-map {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 100;
-        }
-
-        .desk {
-            width: 60px; height: 45px;
-            background: #8d6e63;
-            color: white;
-            position: absolute;
-            cursor: move;
-            display: flex;
+            width: 140px; height: 90px;
+            background: #ffffff; border: 4px solid #5d4037;
+            border-radius: 10px; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            border-radius: 4px; font-size: 10px;
+            font-weight: bold; cursor: pointer; text-align: center;
+            transition: transform 0.2s, background 0.2s; font-size: 13px;
         }
 
-        #bell-animation {
-            width: 100px; display: none;
+        .box-btn:hover { transform: scale(1.05); background: #fffde7; }
+        .online-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+        /* Canvas & Overlays */
+        #drawingCanvas { position: absolute; top:0; left:0; display:none; cursor: crosshair; }
+        .split-line { position: absolute; left: 50%; height: 100%; border-left: 3px dashed rgba(255,255,255,0.5); display:none; }
+        
+        #seatingOverlay {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.9); z-index: 1000;
         }
+        .desk { width: 60px; height: 45px; background: #8d6e63; color: white; position: absolute; cursor: move; display: flex; align-items: center; justify-content: center; font-size: 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <!-- Left side: Seating button -->
-    <div class="side-panel left-side">
-        <strong>ROOM</strong><br><br>
-        <button onclick="toggleSeating()">Seating Plan</button>
+    <div class="top-bar">
+        <button onclick="document.getElementById('file-up').click()" style="padding: 10px 20px; font-weight: bold; cursor: pointer;">📂 Upload PDF/PPT Lecture</button>
+        <input type="file" id="file-up" style="display:none" onchange="alert('Lecture Loaded to Board')">
     </div>
 
-    <!-- Right side: Timer -->
-    <div class="side-panel right-side">
-        <strong>TIMER</strong>
-        <div id="timer-display" style="font-size: 24px; font-weight: bold;">10:00</div>
+    <div class="left-controls">
+        <button class="box-btn" onclick="toggleSeating()">🪑 Arrange<br>Seating</button>
+    </div>
+
+    <div class="board-wrapper" id="mainBoard">
+        <div id="boardText">
+            <h1 class="board-title">Mr. Gilbert</h1>
+            <h2 class="board-subtitle">Computing Class</h2>
+            <p id="activeClassDisplay">Status: Offline</p>
+        </div>
+        <div class="split-line" id="splitLine"></div>
+        <canvas id="drawingCanvas"></canvas>
+    </div>
+
+    <div class="right-controls">
+        <div class="timer-val" id="timeDisp">10:00</div>
         <button onclick="startTimer()">Start</button>
         <button onclick="resetTimer()">Reset</button>
-        <img id="bell-animation" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJtZzZ6Ynd6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx36T2CcV2/giphy.gif">
+        <img id="bellRing" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJtZzZ6Ynd6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx36T2CcV2/giphy.gif" style="width: 80px; margin-top:10px; display:none;">
     </div>
 
-    <!-- Center Board -->
-    <div class="board-container" id="board">
-        <div id="class-status-badge">⚪ OFFLINE</div>
-        <div id="board-ui">
-            <h1 class="chalk-title">Mr. Gilbert</h1>
-            <h2 class="chalk-subtitle">Computing Class</h2>
-            <p id="current-class-display">Please select a class below</p>
-        </div>
-        <canvas id="studentCanvas"></canvas>
-    </div>
-
-    <!-- Bottom Clickable Box Buttons -->
     <div class="bottom-nav">
-        <div class="box-btn" onclick="openClassSettings()">📂 Manage<br>Classes</div>
-        <div class="box-btn" onclick="toggleOnline()">🟢 Go<br>Online/Offline</div>
-        <div class="box-btn" onclick="pickRandom()">🎲 Random<br>Picker</div>
-        <div class="box-btn" onclick="startDrawing('single')">✏️ Single<br>Board</div>
-        <div class="box-btn" onclick="startDrawing('split')">✂️ Split<br>Board</div>
-        <div class="box-btn" onclick="closeBoard()">❌ Clear<br>Board</div>
-        <div class="box-btn" onclick="document.getElementById('ppt-input').click()">⬆️ Upload<br>Lecture</div>
-        <div class="box-btn" onclick="adjustZoom(0.1)">🔍 Zoom<br>In/Out</div>
+        <div class="box-btn" onclick="manageClass()">📝 Class List<br>(Import)</div>
+        <div class="box-btn" onclick="toggleStatus()">🟢 Set<br>Online/Offline</div>
+        <div class="box-btn" onclick="pickName()">🎲 Random<br>Picker</div>
+        <div class="box-btn" onclick="initBoard('single')">🖋️ Single<br>Board</div>
+        <div class="box-btn" onclick="initBoard('split')">✂️ Split<br>Board</div>
+        <div class="box-btn" onclick="resetBoard()">🧹 Clear<br>Board</div>
+        <div class="box-btn" onclick="boardZoom(1.1)">🔍 Zoom In</div>
+        <div class="box-btn" onclick="boardZoom(0.9)">🔍 Zoom Out</div>
     </div>
 
-    <input type="file" id="ppt-input" style="display:none" onchange="alert('Lecture Loaded to Board')">
-
-    <!-- Seating Arrangement Overlay -->
-    <div id="seating-map">
-        <h2 style="color:white; text-align:center;">Drag Desks to Arrange (Board is Front)</h2>
-        <div id="seating-area" style="position:relative; width:100%; height:80%;"></div>
-        <button onclick="toggleSeating()" style="display:block; margin:auto;">Save & Close</button>
+    <!-- Seating Modal -->
+    <div id="seatingOverlay">
+        <h2 style="color:white; text-align:center;">Drag Tables (Max 35) - Board is Front</h2>
+        <div id="roomFloor" style="position:relative; width:100%; height:80%;"></div>
+        <div style="text-align:center;"><button onclick="toggleSeating()" style="padding:15px 40px;">Close & Save</button></div>
     </div>
 
-    <audio id="bell-sound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+    <audio id="bellSnd" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
 
     <script>
-        let isOnline = false;
-        let zoom = 1;
-        let timerTime = 600;
+        let timerSeconds = 600;
         let timerInterval;
-        let studentList = ["Student A", "Student B", "Student C", "Student D"];
+        let isClassOnline = false;
+        let currentScale = 1;
+        let students = [];
 
-        // 1. Board Logic
-        const canvas = document.getElementById('studentCanvas');
-        const ctx = canvas.getContext('2d');
-        let drawing = false;
-
-        function startDrawing(mode) {
-            canvas.style.display = 'block';
-            document.getElementById('board-ui').style.opacity = '0.1';
-            canvas.width = 850; canvas.height = 450;
-            ctx.strokeStyle = "white"; ctx.lineWidth = 3;
-            if(mode === 'split') {
-                ctx.beginPath(); ctx.moveTo(425, 0); ctx.lineTo(425, 450); ctx.stroke();
+        // --- Class Status Logic ---
+        function toggleStatus() {
+            isClassOnline = !isClassOnline;
+            const display = document.getElementById('activeClassDisplay');
+            if(isClassOnline) {
+                display.innerHTML = '<span style="color:#00ff00">●</span> Class On-going';
+            } else {
+                display.innerHTML = 'Status: Offline';
             }
         }
-        function closeBoard() {
-            canvas.style.display = 'none';
-            document.getElementById('board-ui').style.opacity = '1';
-            ctx.clearRect(0,0, canvas.width, canvas.height);
+
+        function manageClass() {
+            let input = prompt("Enter student names (Vinschool ID), comma separated:", "Alex ID01, Ben ID02");
+            if(input) students = input.split(",");
         }
 
-        canvas.onmousedown = () => drawing = true;
-        canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
-        canvas.onmousemove = (e) => {
-            if(!drawing) return;
-            ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke();
-        };
-
-        // 2. Class Status
-        function toggleOnline() {
-            isOnline = !isOnline;
-            const badge = document.getElementById('class-status-badge');
-            badge.innerHTML = isOnline ? "🔴 CLASS ON-GOING" : "⚪ OFFLINE";
-            badge.style.color = isOnline ? "#ff5252" : "white";
+        // --- Random Picker ---
+        function pickName() {
+            if(students.length === 0) return alert("Please import names first!");
+            let winner = students[Math.floor(Math.random() * students.length)];
+            alert("Selected Student: " + winner);
         }
 
-        // 3. Timer Logic
+        // --- Timer Logic ---
         function startTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                timerTime--;
-                let m = Math.floor(timerTime/60);
-                let s = timerTime % 60;
-                document.getElementById('timer-display').innerText = `${m}:${s<10?'0'+s:s}`;
-                if(timerTime <= 0) {
+                timerSeconds--;
+                let m = Math.floor(timerSeconds/60);
+                let s = timerSeconds % 60;
+                document.getElementById('timeDisp').innerText = `${m}:${s<10?'0'+s:s}`;
+                if(timerSeconds <= 0) {
                     clearInterval(timerInterval);
-                    document.getElementById('bell-sound').play();
-                    document.getElementById('bell-animation').style.display = 'block';
+                    document.getElementById('bellSnd').play();
+                    document.getElementById('bellRing').style.display = 'block';
                 }
             }, 1000);
         }
         function resetTimer() {
             clearInterval(timerInterval);
-            timerTime = 600;
-            document.getElementById('timer-display').innerText = "10:00";
-            document.getElementById('bell-animation').style.display = 'none';
+            timerSeconds = 600;
+            document.getElementById('timeDisp').innerText = "10:00";
+            document.getElementById('bellRing').style.display = 'none';
         }
 
-        // 4. Random Picker
-        function pickRandom() {
-            const name = studentList[Math.floor(Math.random() * studentList.length)];
-            alert("Selected Student: " + name);
+        // --- Board Zoom ---
+        function boardZoom(amt) {
+            currentScale *= amt;
+            document.getElementById('mainBoard').style.transform = `scale(${currentScale})`;
         }
 
-        // 5. Seating Logic
+        // --- Drawing Board ---
+        const canv = document.getElementById('drawingCanvas');
+        const ctx = canv.getContext('2d');
+        let drawing = false;
+
+        function initBoard(mode) {
+            canv.style.display = 'block';
+            document.getElementById('boardText').style.opacity = '0.1';
+            canv.width = 850; canv.height = 480;
+            ctx.strokeStyle = "white"; ctx.lineWidth = 4;
+            document.getElementById('splitLine').style.display = (mode === 'split') ? 'block' : 'none';
+        }
+
+        function resetBoard() {
+            canv.style.display = 'none';
+            document.getElementById('boardText').style.opacity = '1';
+            document.getElementById('splitLine').style.display = 'none';
+            ctx.clearRect(0,0,850,480);
+        }
+
+        canv.onmousedown = () => drawing = true;
+        canv.onmouseup = () => { drawing = false; ctx.beginPath(); };
+        canv.onmousemove = (e) => {
+            if(!drawing) return;
+            ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke();
+        };
+
+        // --- Seating Logic ---
         function toggleSeating() {
-            const el = document.getElementById('seating-map');
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+            const overlay = document.getElementById('seatingOverlay');
+            overlay.style.display = (overlay.style.display === 'block') ? 'none' : 'block';
         }
 
-        function initSeating() {
-            const area = document.getElementById('seating-area');
-            for(let i=0; i<35; i++) {
+        function initDesks() {
+            const floor = document.getElementById('roomFloor');
+            for(let i=1; i<=35; i++) {
                 const d = document.createElement('div');
                 d.className = 'desk';
-                d.innerText = 'Desk ' + (i+1);
-                d.style.left = (i % 7) * 100 + 50 + 'px';
-                d.style.top = Math.floor(i / 7) * 80 + 50 + 'px';
-                
-                // Draggable logic
+                d.innerText = 'Desk ' + i;
+                d.style.left = (i % 7) * 110 + 100 + 'px';
+                d.style.top = Math.floor(i / 7) * 80 + 100 + 'px';
                 d.onmousedown = function(e) {
-                    let shiftX = e.clientX - d.getBoundingClientRect().left;
-                    let shiftY = e.clientY - d.getBoundingClientRect().top;
+                    let sX = e.clientX - d.getBoundingClientRect().left;
+                    let sY = e.clientY - d.getBoundingClientRect().top;
                     document.onmousemove = (e) => {
-                        d.style.left = e.pageX - shiftX + 'px';
-                        d.style.top = e.pageY - shiftY + 'px';
+                        d.style.left = e.pageX - sX + 'px';
+                        d.style.top = e.pageY - sY + 'px';
                     };
                     document.onmouseup = () => document.onmousemove = null;
                 };
-                area.appendChild(d);
+                floor.appendChild(d);
             }
         }
-        initSeating();
-
-        // 6. Zoom
-        function adjustZoom(val) {
-            zoom = (zoom === 1) ? 1.2 : 1;
-            document.getElementById('board').style.transform = `scale(${zoom})`;
-        }
-
-        function openClassSettings() {
-            let names = prompt("Paste Class Names (separated by commas):", "Student 1, Student 2, Student 3");
-            if(names) {
-                studentList = names.split(",");
-                document.getElementById('current-class-display').innerText = "Class Loaded: " + studentList.length + " Students";
-            }
-        }
+        initDesks();
     </script>
 </body>
 </html>
