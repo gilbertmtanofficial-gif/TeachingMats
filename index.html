@@ -4,70 +4,325 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mr. Gilbert's Computing Class</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --chalk-white: #f0f0f0;
+            --anime-blue: #a0c4ff;
+            --board-green: #2e5a31;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            overflow: hidden;
+            /* Replace with your anime classroom image URL */
+            background: url('https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        /* Top Bar - Uploads */
+        .top-bar {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            z-index: 10;
+        }
+
+        /* Chalkboard Center */
+        .chalkboard-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -55%);
+            width: 70%;
+            height: 50%;
+            background: var(--board-green);
+            border: 15px solid #5d4037;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .board-title {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 0;
+            text-decoration: underline wavy white;
+        }
+
+        .board-subtitle {
+            font-size: 2rem;
+            margin-top: 10px;
+        }
+
+        /* Canvas for Student Work */
+        #studentCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            display: none;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Right Side - Timer */
+        .timer-panel {
+            position: absolute;
+            right: 20px;
+            top: 100px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 3px solid var(--anime-blue);
+        }
+
+        #timerDisplay { font-size: 2.5rem; font-weight: bold; }
+
+        /* Left Side - Seating Button */
+        .left-panel {
+            position: absolute;
+            left: 20px;
+            top: 100px;
+        }
+
+        /* Bottom Controls */
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        button:hover { background: var(--anime-blue); }
+
+        /* Status Indicator */
+        .status-dot {
+            height: 15px;
+            width: 15px;
+            background-color: #bbb;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .online { background-color: #4CAF50; }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+        }
+        .modal-content {
+            background: white; margin: 5% auto; padding: 20px; width: 80%; border-radius: 10px;
+        }
+
+        #bellImg { width: 100px; display: none; }
+    </style>
 </head>
 <body>
-    <!-- Top Navigation Bar -->
-    <div class="top-nav">
-        <div class="nav-left">
-            <h2>Mr. Gilbert's Computing Class</h2>
+
+    <div class="top-bar">
+        <input type="file" id="fileInput" accept=".pdf" style="display:none" onchange="handleFile(this)">
+        <button onclick="document.getElementById('fileInput').click()">Upload Lecture (PDF)</button>
+        <button onclick="zoom(1.1)">Zoom +</button>
+        <button onclick="zoom(0.9)">Zoom -</button>
+    </div>
+
+    <div class="left-panel">
+        <button onclick="toggleModal('seatingModal')">🪑 Seating Arrangement</button>
+    </div>
+
+    <div class="chalkboard-container" id="mainBoard">
+        <div id="boardText">
+            <h1 class="board-title">Mr. Gilbert</h1>
+            <p class="board-subtitle">Computing Class</p>
+            <div id="activeClassName">No Class Selected</div>
         </div>
-        <div class="nav-center">
-            <button id="presentationBtn" class="nav-btn">
-                <span>📄</span> Upload Presentation
-            </button>
-            <input type="file" id="fileInput" accept=".pdf,.ppt,.pptx" style="display: none;">
-        </div>
-        <div class="nav-right">
-            <button id="fullscreenBtn" class="nav-btn">Fullscreen</button>
+        <canvas id="studentCanvas"></canvas>
+    </div>
+
+    <div class="timer-panel">
+        <div id="timerDisplay">10:00</div>
+        <button onclick="startTimer()">Start</button>
+        <button onclick="resetTimer()">Reset</button>
+        <br>
+        <img id="bellImg" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJtZzZ6Ynd6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx36T2CcV2/giphy.gif" alt="Bell Ringing">
+    </div>
+
+    <div class="controls">
+        <button onclick="toggleModal('classModal')">📚 Manage Classes</button>
+        <button onclick="pickRandomStudent()">🎲 Random Picker</button>
+        <button onclick="toggleBoard('single')">✏️ Single Board</button>
+        <button onclick="toggleBoard('split')">✂️ Split Board</button>
+        <button onclick="closeBoard()">❌ Close Board</button>
+    </div>
+
+    <!-- Modals -->
+    <div id="classModal" class="modal">
+        <div class="modal-content">
+            <h2>Class Management</h2>
+            <textarea id="classListInput" placeholder="Enter Name, ID per line" rows="10" style="width:100%"></textarea>
+            <div id="classStatusList"></div>
+            <button onclick="saveClasses()">Save & Close</button>
         </div>
     </div>
 
-    <!-- Main Container -->
-    <div class="classroom-container">
-        <!-- Left Panel - Seating Arrangement -->
-        <div class="left-panel">
-            <button id="seatingBtn" class="panel-btn">
-                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIgMmwtMSAxdjE4bDEgMSAxLTFWM2wtMS0xem0tNiA2djhoNHYtOGgtNHptMTAgMHY4aDR2LThoLTR6Ii8+PC9zdmc+" alt="Seating">
-                Seating Arrangement
-            </button>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Chalkboard -->
-            <div class="chalkboard" id="chalkboard">
-                <div class="chalk-frame" id="chalkFrame">
-                    <h1 class="teacher-name">Mr. Gilbert</h1>
-                    <div class="underline"></div>
-                    <h2 class="class-subject">Computing Class</h2>
-                </div>
-                
-                <!-- Presentation Display -->
-                <div id="presentationDisplay" class="presentation-display" style="display: none;">
-                    <div class="presentation-controls">
-                        <button id="zoomIn">🔍+</button>
-                        <button id="zoomOut">🔍-</button>
-                        <button id="resetZoom">⚪</button>
-                        <button id="closePresentationBtn">✕</button>
-                        <span id="zoomLevel">100%</span>
-                    </div>
-                    <div id="presentationContent" class="presentation-content">
-                        <iframe id="presentationFrame" style="display: none;"></iframe>
-                        <canvas id="pdfCanvas" style="display: none;"></canvas>
-                        <div id="pdfControls" class="pdf-controls" style="display: none;">
-                            <button id="prevPage">← Prev</button>
-                            <span id="pageInfo">Page 1 of 1</span>
-                            <button id="nextPage">Next →</button>
-                        </div>
-                    </div>
-                </div>
+    <div id="seatingModal" class="modal">
+        <div class="modal-content" style="height: 80vh;">
+            <h2>Seating Arrangement (Drag tables)</h2>
+            <div id="seatingArea" style="position:relative; width:100%; height:80%; border:1px solid #ccc;">
+                <!-- Tables generated by JS -->
             </div>
+            <button onclick="toggleModal('seatingModal')">Close</button>
+        </div>
+    </div>
 
-            <!-- Control Panel -->
-            <div class="control-panel">
-                <!-- Class List Management -->
-                <div class="class-section">
-                    <h3>Class Management</h3>
-                    <div class="class-controls">
-                        <button id
+    <audio id="alarmSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+
+    <script>
+        // --- State Management ---
+        let classes = [
+            { name: "Class A", students: [], status: "offline" },
+            { name: "Class B", students: [], status: "offline" },
+            { name: "Class C", students: [], status: "offline" },
+            { name: "Class D", students: [], status: "offline" },
+            { name: "Class E", students: [], status: "offline" }
+        ];
+        let currentClassIndex = 0;
+        let timerSeconds = 600;
+        let timerInterval;
+
+        // --- Board & Drawing Logic ---
+        const canvas = document.getElementById('studentCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        function toggleBoard(mode) {
+            canvas.style.display = 'block';
+            document.getElementById('boardText').style.display = 'none';
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+            
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 3;
+
+            if(mode === 'split') {
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2, 0);
+                ctx.lineTo(canvas.width/2, canvas.height);
+                ctx.stroke();
+            }
+        }
+
+        function closeBoard() {
+            canvas.style.display = 'none';
+            document.getElementById('boardText').style.display = 'block';
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+        }
+
+        canvas.onmousedown = () => drawing = true;
+        canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
+        canvas.onmousemove = (e) => {
+            if(!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        };
+
+        // --- Timer Logic ---
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                updateTimerDisplay();
+                if(timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('alarmSound').play();
+                    document.getElementById('bellImg').style.display = 'block';
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerSeconds = 600;
+            updateTimerDisplay();
+            document.getElementById('bellImg').style.display = 'none';
+        }
+
+        function updateTimerDisplay() {
+            let m = Math.floor(timerSeconds / 60);
+            let s = timerSeconds % 60;
+            document.getElementById('timerDisplay').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+        }
+
+        // --- Class Management ---
+        function saveClasses() {
+            const input = document.getElementById('classListInput').value;
+            classes[currentClassIndex].students = input.split('\n').filter(line => line.trim() !== "");
+            classes[currentClassIndex].status = "online";
+            document.getElementById('activeClassName').innerHTML = 
+                `<strong>${classes[currentClassIndex].name}</strong> <span class="status-dot online"></span> (On-going)`;
+            toggleModal('classModal');
+        }
+
+        function pickRandomStudent() {
+            const activeClass = classes[currentClassIndex];
+            if(activeClass.students.length === 0) return alert("Import student names first!");
+            const rand = Math.floor(Math.random() * activeClass.students.length);
+            alert("Selected Student: " + activeClass.students[rand]);
+        }
+
+        // --- PDF Simulation ---
+        function handleFile(input) {
+            alert("PDF/Lecture loaded onto board! (In a full app, we would use pdf.js to render here)");
+            document.getElementById('boardText').innerHTML = `<h2 style='color:white'>Lecture View: ${input.files[0].name}</h2>`;
+        }
+
+        function zoom(scale) {
+            const board = document.getElementById('mainBoard');
+            let currentScale = board.style.transform || "scale(1)";
+            board.style.transform = `translate(-50%, -55%) scale(${scale})`;
+        }
+
+        function toggleModal(id) {
+            const m = document.getElementById(id);
+            m.style.display = m.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // --- Initialize Seating ---
+        function initSeating() {
+            const area = document.getElementById('seatingArea');
+            for(let i=0; i<35; i++) {
+                const desk = document.createElement('div');
+                desk.style.cssText = `width:50px; height:40px; background:#8d6e63; position:absolute; left:${(i%7)*60 + 20}px; top:${Math.floor(i/7)*60 + 20}px; cursor:move; border-radius:3px; font-size:10px; color:white; text-align:center;`;
+                desk.innerText = "Desk " + (i+1);
+                desk.draggable = true;
+                area.appendChild(desk);
+            }
+        }
+        initSeating();
+    </script>
+</body>
+</html>
