@@ -2,220 +2,315 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>The Computing Lab - Mr. Gilbert</title>
-    <!-- Dependencies for PPT rendering and Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-    <!-- Using a custom library approach for PPT handling -->
+    <title>Mr. Gilbert's Pro CS Suite</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
             --board-green: #1e3d2f;
             --wood: #3e2723;
-            --folder-bg: #eceff1;
+            --folder-bg: #f5f5f5;
         }
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: 'Segoe UI', sans-serif; overflow: hidden;
-            /* High-quality Cyber/Tech Classroom Aesthetic */
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
-                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop');
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070');
             background-size: cover;
         }
 
-        /* 1. EDITABLE CHALK TEXT */
+        /* 1. CHALK HEADER (Editable) */
         .chalk-header {
-            position: absolute; top: 10%; width: 100%; text-align: center;
-            color: rgba(255,255,255,0.9); z-index: 5;
+            position: absolute; top: 5%; width: 100%; text-align: center; z-index: 5;
         }
         .editable-name {
-            font-family: 'Brush Script MT', cursive;
-            font-size: 70px; border: none; background: transparent;
-            color: white; text-align: center; width: 80%;
-            text-decoration: underline wavy white 3px; cursor: text;
+            font-family: 'Brush Script MT', cursive; font-size: 60px;
+            background: transparent; border: none; color: white;
+            text-align: center; width: 90%; text-decoration: underline wavy white 2px;
         }
 
-        /* 2. THE MAIN BOARD & PPT NAV */
+        /* 2. MAIN BOARD */
         .board-container {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 1000px; height: 550px;
+            position: absolute; top: 45%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 950px; height: 520px;
             background: var(--board-green);
-            border: 20px solid var(--wood);
-            border-radius: 8px; box-shadow: 0 0 50px rgba(0,0,0,1);
-            overflow: hidden; z-index: 10;
+            border: 15px solid var(--wood);
+            border-radius: 10px; box-shadow: 0 0 50px #000;
+            overflow: hidden; z-index: 10; transition: 0.3s;
         }
-        #ppt-display { width: 100%; height: 100%; overflow: hidden; background: white; display: none; }
-        #draw-layer { position: absolute; top:0; left:0; z-index: 20; cursor: crosshair; }
-        
+
+        #slide-viewer {
+            width: 100%; height: 100%; display: flex;
+            align-items: center; justify-content: center;
+            background: white; color: black; font-size: 24px;
+        }
+
+        #draw-layer { position: absolute; top: 0; left: 0; z-index: 20; cursor: crosshair; }
+
         /* Navigation Taps */
-        .nav-tap {
-            position: absolute; top: 0; width: 10%; height: 100%; z-index: 30;
-            display: flex; align-items: center; justify-content: center;
-            color: rgba(255,255,255,0.2); font-size: 40px; cursor: pointer; transition: 0.3s;
+        .nav-zone {
+            position: absolute; top: 0; width: 80px; height: 100%;
+            z-index: 100; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; color: rgba(0,0,0,0.2); font-size: 40px;
         }
-        .nav-tap:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-prev { left: 0; }
-        .nav-next { right: 0; }
+        .nav-zone:hover { background: rgba(0,0,0,0.05); color: #000; }
+        .next-zone { right: 0; }
+        .prev-zone { left: 0; }
 
-        /* 3. THE HOVER DOCK (FOLDER STYLE) */
-        .dock-trigger {
-            position: fixed; bottom: 0; width: 100%; height: 20px; z-index: 999;
+        /* 3. HOVER DOCK (Page Folders) */
+        .dock-area {
+            position: fixed; bottom: -320px; left: 50%; transform: translateX(-50%);
+            width: 800px; height: 350px; background: var(--folder-bg);
+            border-radius: 20px 20px 0 0; transition: 0.4s ease-in-out;
+            z-index: 1000; padding: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
         }
-        .folder-dock {
-            position: fixed; bottom: -450px; left: 50%; transform: translateX(-50%);
-            width: 80%; height: 400px; background: var(--folder-bg);
-            border-radius: 20px 20px 0 0; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-            padding: 20px;
-        }
-        .dock-trigger:hover + .folder-dock, .folder-dock:hover { bottom: 0; }
+        .dock-area:hover { bottom: 0; }
 
-        /* Tabs inside Folder */
-        .tab-nav { display: flex; border-bottom: 2px solid #ccc; margin-bottom: 20px; }
-        .tab-link {
-            padding: 10px 20px; cursor: pointer; font-weight: bold; color: #555;
-            border-radius: 10px 10px 0 0;
+        .tabs { display: flex; gap: 5px; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
+        .tab-btn {
+            padding: 10px 20px; cursor: pointer; background: #e0e0e0;
+            border-radius: 10px 10px 0 0; font-weight: bold; border: none;
         }
-        .tab-link.active { background: white; color: var(--wood); border: 2px solid #ccc; border-bottom: none; }
+        .tab-btn.active { background: white; border: 1px solid #ddd; border-bottom: white; }
         
-        .tab-content { display: none; }
-        .tab-content.active { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .tab-content { display: none; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .tab-content.active { display: grid; }
 
-        /* 4. SEATING PLAN 2D */
-        .seating-grid {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; display: none;
+        /* 4. PPT STORAGE ITEMS */
+        .ppt-item {
+            background: white; border: 1px solid #ccc; padding: 10px;
+            border-radius: 8px; position: relative; font-size: 12px;
+        }
+        .delete-btn { position: absolute; top: 5px; right: 5px; color: red; cursor: pointer; }
+
+        /* 5. SEATING OVERLAY */
+        #seating-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 2000;
         }
         .desk-unit {
-            width: 100px; height: 80px; background: #8d6e63; border: 3px solid #3e2723;
-            position: absolute; border-radius: 10px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; cursor: move;
+            width: 110px; height: 70px; background: #a1887f; position: absolute;
+            border: 3px solid #5d4037; border-radius: 8px; cursor: move;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .desk-unit input { width: 80%; border: none; font-size: 11px; text-align: center; margin-top: 5px; }
+        .desk-unit input { width: 80%; border: none; font-size: 11px; text-align: center; }
 
-        /* Status UI (Upper Right) */
-        .status-ui {
-            position: absolute; top: 20px; right: 40px; color: white;
-            text-align: right; z-index: 100; font-family: 'Courier New', Courier, monospace;
-        }
-
-        #bell-gif { width: 100px; display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; }
+        /* Status & Timer */
+        .upper-ui { position: absolute; top: 20px; right: 30px; color: white; text-align: right; z-index: 100; }
+        #picker-result { font-size: 24px; color: #ffeb3b; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="chalk-header">
-        <input type="text" class="editable-name" value="Mr. Gilbert's Computing Class" spellcheck="false">
+        <input type="text" class="editable-name" value="Mr. Gilbert's Computing Class">
     </div>
 
-    <div class="status-ui">
-        <div id="class-id-tag" style="font-size: 20px;">[ NO SECTION ]</div>
-        <div id="status-dot">● OFFLINE</div>
+    <div class="upper-ui">
+        <div id="section-tag" style="font-size: 18px;">Section: None</div>
+        <div id="online-status">● Offline</div>
+        <div id="picker-result"></div>
     </div>
 
-    <!-- The Board -->
     <div class="board-container" id="board-container">
-        <div class="nav-tap nav-prev" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></div>
-        <div class="nav-tap nav-next" onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></div>
+        <div class="nav-zone prev-zone" onclick="navSlide(-1)">❮</div>
+        <div class="nav-zone next-zone" onclick="navSlide(1)">❯</div>
         
-        <iframe id="ppt-frame" src="" style="width:100%; height:100%; border:none; display:none;"></iframe>
+        <div id="slide-viewer">Welcome. Please upload a Presentation.</div>
         <canvas id="draw-layer"></canvas>
     </div>
 
-    <!-- Hidden Bell -->
-    <img id="bell-gif" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJtZzZ6Ynd6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx36T2CcV2/giphy.gif">
-
     <!-- Hover Dock -->
-    <div class="dock-trigger"></div>
-    <div class="folder-dock">
-        <div class="tab-nav">
-            <div class="tab-link active" onclick="openTab('lecture')">Lecture</div>
-            <div class="tab-link" onclick="openTab('tools')">Drawing Tools</div>
-            <div class="tab-link" onclick="openTab('class')">Class Management</div>
-            <div class="tab-link" onclick="openTab('timer-tab')">Clock & Timer</div>
+    <div class="dock-area">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('tab-ppt')">Presentations (Max 6)</button>
+            <button class="tab-btn" onclick="showTab('tab-draw')">Drawing Tools</button>
+            <button class="tab-btn" onclick="showTab('tab-class')">Classroom</button>
+            <button class="tab-btn" onclick="showTab('tab-timer')">Timer</button>
         </div>
 
-        <!-- Lecture Tab -->
-        <div id="lecture" class="tab-content active">
-            <button onclick="document.getElementById('ppt-up').click()">📂 Upload PPT/PDF</button>
-            <button onclick="changeZoom(1.1)">🔍 Zoom In</button>
-            <button onclick="changeZoom(0.9)">🔍 Zoom Out</button>
-            <input type="file" id="ppt-up" style="display:none" onchange="handleFile(this)">
+        <div id="tab-ppt" class="tab-content active">
+            <div style="grid-column: span 3;">
+                <input type="file" id="ppt-upload" multiple accept=".pdf,.pptx" onchange="addPresentation(this)">
+                <small>Upload PDF or PPTX (Simulation)</small>
+            </div>
+            <div id="ppt-list-container" style="grid-column: span 3; display: flex; gap: 10px;">
+                <!-- PPT Items Go Here -->
+            </div>
         </div>
 
-        <!-- Tools Tab -->
-        <div id="tools" class="tab-content">
-            <button onclick="setTool('chalk')">⚪ White Chalk</button>
-            <button onclick="setTool('highlighter')">🟡 Highlighter</button>
-            <button onclick="setMode('single')">⬜ Single Board</button>
-            <button onclick="setMode('split')">✂️ Split Board</button>
-            <button onclick="clearBoard()">🧹 Clear Everything</button>
+        <div id="tab-draw" class="tab-content">
+            <button onclick="setTool('chalk')">🖊 Chalk</button>
+            <button onclick="setTool('highlighter')">🖍 Highlighter</button>
+            <button onclick="setMode('single')">⬜ Single</button>
+            <button onclick="setMode('split')">✂ Split</button>
+            <button onclick="clearBoard()">🧹 Clear Drawing</button>
+            <button onclick="zoomBoard(1.1)">🔍 Zoom In</button>
+            <button onclick="zoomBoard(0.9)">🔍 Zoom Out</button>
         </div>
 
-        <!-- Class Tab -->
-        <div id="class" class="tab-content">
+        <div id="tab-class" class="tab-content">
             <button onclick="importClass()">📥 Import Names</button>
-            <button onclick="toggleOnline()">🟢 Go Online</button>
-            <button onclick="pickStudent()">🎲 Random Picker</button>
+            <button onclick="toggleOnline()">🔴 Online/Offline</button>
+            <button onclick="pickStudent()">🎲 Pick Student</button>
             <button onclick="openSeating()">🪑 Seating Plan</button>
         </div>
 
-        <!-- Timer Tab -->
-        <div id="timer-tab" class="tab-content">
-            <div style="font-size: 40px; font-weight: bold;" id="timer-val">10:00</div>
-            <button onclick="startTimer()">Start 10m</button>
+        <div id="tab-timer" class="tab-content">
+            <div style="font-size: 50px; font-weight: bold;" id="timer-val">10:00</div>
+            <button onclick="startTimer()">Start</button>
             <button onclick="resetTimer()">Reset</button>
         </div>
     </div>
 
-    <!-- Seating Overlay -->
-    <div id="seating-grid" class="seating-grid">
-        <h2 style="color:white; text-align:center;">Drag Desks - Click Board Side (Front) to Close</h2>
-        <div id="floor-area" style="width:100%; height:80vh; position:relative;" onclick="if(event.target==this) closeSeating()"></div>
+    <!-- Seating Modal -->
+    <div id="seating-modal">
+        <h2 style="color:white; text-align:center;">Drag Tables - Click Board Area to Close</h2>
+        <div id="floor" style="width:100%; height:80vh; position:relative;" onclick="if(event.target==this) closeSeating()"></div>
     </div>
 
     <audio id="bell-sound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
 
     <script>
-        // --- PPT Handling (Solution for PPT Rendering) ---
-        // Browser cannot native render PPT. Solution: Use Office Online Viewer or Google Viewer.
-        function handleFile(input) {
-            const file = input.files[0];
-            alert("File received: " + file.name + "\nTo display local PPTs, please upload to Google Drive/OneDrive and paste link, or use PDF for instant rendering.");
-            // Simulation for the board clearing
-            document.getElementById('ppt-frame').style.display = 'block';
-            document.getElementById('ppt-frame').src = "https://docs.google.com/viewer?url=YOUR_FILE_URL&embedded=true";
+        // --- Presentation Manager ---
+        let presentations = [];
+        let activePPT = null;
+        let currentSlide = 0;
+
+        function addPresentation(input) {
+            if (presentations.length >= 6) return alert("Storage full! Delete a file first.");
+            const files = input.files;
+            for (let f of files) {
+                if (presentations.length < 6) {
+                    presentations.push({ name: f.name, slides: ["Slide 1: " + f.name, "Slide 2: Content", "Slide 3: Summary"] });
+                }
+            }
+            renderPPTList();
         }
 
-        function changeSlide(dir) {
-            // Logic to send key events to iframe for PPT navigation
-            alert(dir > 0 ? "Moving to Next Slide" : "Moving to Previous Slide");
+        function renderPPTList() {
+            const container = document.getElementById('ppt-list-container');
+            container.innerHTML = '';
+            presentations.forEach((p, index) => {
+                const item = document.createElement('div');
+                item.className = 'ppt-item';
+                item.innerHTML = `
+                    <strong>${p.name.substring(0, 15)}...</strong><br>
+                    <button onclick="loadPPT(${index})">Load</button>
+                    <span class="delete-btn" onclick="deletePPT(${index})">✖</span>
+                `;
+                container.appendChild(item);
+            });
         }
 
-        // --- Tabs Logic ---
-        function openTab(name) {
-            $('.tab-content').removeClass('active');
-            $('.tab-link').removeClass('active');
-            $('#' + name).addClass('active');
-            $(event.target).addClass('active');
+        function loadPPT(index) {
+            activePPT = presentations[index];
+            currentSlide = 0;
+            updateSlideView();
         }
 
-        // --- Seating Plan Logic ---
-        function openSeating() { $('#seating-grid').show(); }
-        function closeSeating() { $('#seating-grid').hide(); }
+        function deletePPT(index) {
+            presentations.splice(index, 1);
+            if (activePPT === presentations[index]) activePPT = null;
+            renderPPTList();
+        }
 
-        function initDesks() {
-            const area = document.getElementById('floor-area');
-            for(let i=0; i<35; i++) {
+        function updateSlideView() {
+            const viewer = document.getElementById('slide-viewer');
+            if (activePPT) {
+                viewer.innerHTML = `
+                    <div style="text-align:center;">
+                        <h2>${activePPT.slides[currentSlide]}</h2>
+                        <p>(Click edges to navigate)</p>
+                    </div>`;
+            }
+        }
+
+        function navSlide(dir) {
+            if (!activePPT) return;
+            currentSlide += dir;
+            if (currentSlide < 0) currentSlide = 0;
+            if (currentSlide >= activePPT.slides.length) currentSlide = activePPT.slides.length - 1;
+            updateSlideView();
+        }
+
+        // --- Random Name Picker ---
+        let students = [];
+        function importClass() {
+            let section = prompt("Section Name:", "8B");
+            let list = prompt("Enter Student Names (Comma separated):");
+            if(section) document.getElementById('section-tag').innerText = "Section: " + section;
+            if(list) students = list.split(",").map(s => s.trim());
+        }
+
+        function pickStudent() {
+            if (students.length === 0) return alert("Import class names first!");
+            const display = document.getElementById('picker-result');
+            let counter = 0;
+            let interval = setInterval(() => {
+                display.innerText = "🎲 " + students[Math.floor(Math.random() * students.length)];
+                counter++;
+                if (counter > 15) {
+                    clearInterval(interval);
+                    display.style.color = "#4CAF50";
+                }
+            }, 100);
+        }
+
+        // --- Drawing Tools ---
+        const canvas = document.getElementById('draw-layer');
+        const ctx = canvas.getContext('2d');
+        let painting = false;
+        let tool = 'chalk';
+
+        function initCanvas() {
+            canvas.width = 950; canvas.height = 520;
+            ctx.lineCap = 'round';
+        }
+        initCanvas();
+
+        function setTool(t) { tool = t; }
+
+        canvas.onmousedown = () => painting = true;
+        canvas.onmouseup = () => { painting = false; ctx.beginPath(); };
+        canvas.onmousemove = (e) => {
+            if (!painting) return;
+            ctx.lineWidth = (tool === 'highlighter') ? 25 : 3;
+            ctx.strokeStyle = (tool === 'highlighter') ? 'rgba(255,255,0,0.3)' : 'white';
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+        };
+
+        function clearBoard() { ctx.clearRect(0,0,950,520); }
+
+        function setMode(mode) {
+            clearBoard();
+            if(mode === 'split') {
+                ctx.strokeStyle = "rgba(255,255,255,0.2)";
+                ctx.beginPath(); ctx.moveTo(475,0); ctx.lineTo(475,520); ctx.stroke();
+            }
+        }
+
+        // --- Dock & Seating ---
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function openSeating() { document.getElementById('seating-modal').style.display = 'block'; }
+        function closeSeating() { document.getElementById('seating-modal').style.display = 'none'; }
+
+        function initSeating() {
+            const floor = document.getElementById('floor');
+            for(let i=1; i<=35; i++) {
                 const d = document.createElement('div');
                 d.className = 'desk-unit';
-                d.style.left = (i % 7) * 120 + 50 + "px";
-                d.style.top = Math.floor(i / 7) * 100 + 50 + "px";
-                d.innerHTML = `🪑<input type="text" placeholder="Student ${i+1}">`;
-                
-                // Drag and drop
+                d.style.left = (i % 7) * 130 + 50 + "px";
+                d.style.top = Math.floor(i / 7) * 90 + 50 + "px";
+                d.innerHTML = `🪑<input type="text" placeholder="Name ${i}">`;
                 d.onmousedown = function(e) {
                     if(e.target.tagName === 'INPUT') return;
                     let sX = e.clientX - d.offsetLeft;
@@ -226,52 +321,10 @@
                     }
                     document.onmouseup = () => document.onmousemove = null;
                 }
-                area.appendChild(d);
+                floor.appendChild(d);
             }
         }
-        initDesks();
-
-        // --- Board Logic ---
-        const canv = document.getElementById('draw-layer');
-        const ctx = canv.getContext('2d');
-        let painting = false;
-        let toolType = 'chalk';
-
-        function resizeBoard() {
-            canv.width = 1000; canv.height = 550;
-        }
-        resizeBoard();
-
-        function setTool(t) { toolType = t; }
-
-        canv.onmousedown = () => painting = true;
-        canv.onmouseup = () => { painting = false; ctx.beginPath(); };
-        canv.onmousemove = (e) => {
-            if(!painting) return;
-            ctx.lineWidth = (toolType === 'highlighter') ? 25 : 3;
-            ctx.strokeStyle = (toolType === 'highlighter') ? 'rgba(255,255,0,0.3)' : 'white';
-            ctx.lineCap = 'round';
-            ctx.lineTo(e.offsetX, e.offsetY);
-            ctx.stroke();
-        };
-
-        function clearBoard() { ctx.clearRect(0,0,1000,550); }
-
-        // --- Class Status ---
-        let isOnline = false;
-        let students = [];
-        function toggleOnline() {
-            isOnline = !isOnline;
-            document.getElementById('status-dot').innerText = isOnline ? "🔴 ONLINE" : "● OFFLINE";
-            document.getElementById('status-dot').style.color = isOnline ? "red" : "white";
-        }
-
-        function importClass() {
-            let section = prompt("Class Section:", "7A Computing");
-            let list = prompt("Names (Separated by Comma):", "Alex, Bob, Charlie");
-            if(section) document.getElementById('class-id-tag').innerText = `[ ${section.toUpperCase()} ]`;
-            if(list) students = list.split(",");
-        }
+        initSeating();
 
         // --- Timer ---
         let tSec = 600;
@@ -285,11 +338,19 @@
                 if(tSec <= 0) {
                     clearInterval(tInt);
                     document.getElementById('bell-sound').play();
-                    $('#bell-gif').show().delay(3000).fadeOut();
                 }
             }, 1000);
         }
         function resetTimer() { clearInterval(tInt); tSec = 600; document.getElementById('timer-val').innerText = "10:00"; }
+        
+        function toggleOnline() {
+            const s = document.getElementById('online-status');
+            s.innerText = (s.innerText === "● Offline") ? "🔴 Online" : "● Offline";
+            s.style.color = (s.innerText === "🔴 Online") ? "red" : "white";
+        }
+
+        let z = 1;
+        function zoomBoard(amt) { z *= amt; document.getElementById('board-container').style.transform = `translate(-50%, -50%) scale(${z})`; }
     </script>
 </body>
 </html>
