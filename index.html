@@ -2,259 +2,320 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mr. Gilbert's Computing Class</title>
+    <title>Mr. Gilbert's CS Suite</title>
+    <!-- PDF.js for rendering presentations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
-        /* Base Setup & Anime Background */
+        :root {
+            --board-green: #1e3d2f;
+            --wood: #5d4037;
+        }
+
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Arial', sans-serif;
+            overflow: hidden; font-family: 'Segoe UI', sans-serif;
+            /* Anime Classroom Background */
             background: url('https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
             background-size: cover;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
         }
 
-        /* Top Bar - Presentation Upload */
-        .top-bar {
-            width: 100%; text-align: center; padding-top: 15px;
+        /* 1. CS POSTERS (Behind the board) */
+        .posters-layer {
+            position: absolute; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none;
+            display: flex; justify-content: space-around; padding-top: 50px;
+        }
+        .poster {
+            width: 120px; height: 160px; background: white; border: 4px solid #333;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5); padding: 5px; font-size: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; font-weight: bold;
         }
 
-        /* The Main Board (Center) */
-        .board-wrapper {
-            position: relative;
-            width: 850px; height: 480px;
-            background: #1e3d2f; /* Chalkboard Green */
-            border: 18px solid #5d4037; /* Wooden Frame */
-            border-radius: 12px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.7);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 5;
+        /* 2. THE BOARD */
+        .main-stage {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            transition: transform 0.2s; z-index: 10;
         }
 
-        .board-title {
-            font-size: 85px;
-            font-family: 'Comic Sans MS', cursive;
-            font-weight: bold;
-            margin: 0;
-            text-decoration: underline wavy white 6px; /* Chalk strike */
+        #board {
+            width: 900px; height: 500px;
+            background: var(--board-green);
+            border: 15px solid var(--wood);
+            border-radius: 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            position: relative; overflow: hidden;
         }
 
-        .board-subtitle {
-            font-size: 45px; margin: 10px 0;
+        #presentation-canvas { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: contain; }
+        #drawing-canvas { position: absolute; top:0; left:0; z-index: 15; cursor: crosshair; }
+
+        .default-board-text {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; z-index: 11;
+        }
+        .chalk-title { font-size: 90px; font-family: 'Comic Sans MS'; text-decoration: underline wavy white 6px; margin: 0; }
+
+        /* 3. CLASS STATUS (Top Right) */
+        #status-area {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(255,255,255,0.9); padding: 10px 20px;
+            border-radius: 30px; border: 3px solid var(--wood);
+            z-index: 100; font-weight: bold; display: flex; align-items: center; gap: 10px;
+        }
+        .online-logo { width: 15px; height: 15px; border-radius: 50%; background: #ccc; }
+        .is-online { background: #4CAF50; box-shadow: 0 0 10px #4CAF50; }
+
+        /* 4. DOCK NAVIGATION (Hidden until hover) */
+        .dock-container {
+            position: fixed; bottom: -80px; width: 100%; height: 100px;
+            display: flex; justify-content: center; align-items: flex-end;
+            transition: bottom 0.3s ease; z-index: 1000;
+        }
+        .dock-container:hover { bottom: 10px; }
+        .dock {
+            background: rgba(255,255,255,0.3); backdrop-filter: blur(10px);
+            padding: 10px 20px; border-radius: 20px; display: flex; gap: 10px;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .dock-btn {
+            width: 70px; height: 70px; background: white; border-radius: 15px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 9px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            border: 2px solid var(--wood);
+        }
+        .dock-btn:hover { transform: scale(1.2) translateY(-10px); background: #e3f2fd; }
+
+        /* 5. SEATING ARRANGEMENT */
+        #seating-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 2000;
+        }
+        .desk-2d {
+            width: 80px; height: 60px; background: #c6a482; position: absolute;
+            border-radius: 5px; border: 2px solid #5d4037; cursor: move;
+            display: flex; flex-direction: column; align-items: center; padding: 2px;
+        }
+        .desk-2d input { width: 90%; font-size: 10px; text-align: center; border: none; background: rgba(255,255,255,0.5); }
+
+        /* Timer Panel (Right) */
+        .timer-panel {
+            position: absolute; right: 20px; top: 100px;
+            background: white; padding: 15px; border-radius: 10px; text-align: center;
+            z-index: 50; border: 2px solid var(--wood);
         }
 
-        /* Left Side - Seating Button */
-        .left-controls {
-            position: absolute; left: 40px; top: 40%;
-        }
-
-        /* Right Side - Timer */
-        .right-controls {
-            position: absolute; right: 40px; top: 40%;
-            background: rgba(255,255,255,0.9);
-            padding: 20px; border-radius: 15px;
-            text-align: center; width: 150px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .timer-val { font-size: 35px; font-weight: bold; color: #d32f2f; margin-bottom: 10px; }
-
-        /* Bottom Controls - Clickable Option Boxes */
-        .bottom-nav {
-            display: flex; gap: 15px; margin-bottom: 40px;
-            background: rgba(0,0,0,0.4); padding: 15px; border-radius: 15px;
-        }
-
-        .box-btn {
-            width: 140px; height: 90px;
-            background: #ffffff; border: 4px solid #5d4037;
-            border-radius: 10px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            font-weight: bold; cursor: pointer; text-align: center;
-            transition: transform 0.2s, background 0.2s; font-size: 13px;
-        }
-
-        .box-btn:hover { transform: scale(1.05); background: #fffde7; }
-        .online-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-
-        /* Canvas & Overlays */
-        #drawingCanvas { position: absolute; top:0; left:0; display:none; cursor: crosshair; }
-        .split-line { position: absolute; left: 50%; height: 100%; border-left: 3px dashed rgba(255,255,255,0.5); display:none; }
-        
-        #seatingOverlay {
-            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.9); z-index: 1000;
-        }
-        .desk { width: 60px; height: 45px; background: #8d6e63; color: white; position: absolute; cursor: move; display: flex; align-items: center; justify-content: center; font-size: 10px; border-radius: 4px; }
+        #bell-img { width: 60px; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <button onclick="document.getElementById('file-up').click()" style="padding: 10px 20px; font-weight: bold; cursor: pointer;">📂 Upload PDF/PPT Lecture</button>
-        <input type="file" id="file-up" style="display:none" onchange="alert('Lecture Loaded to Board')">
+    <!-- Posters Layer -->
+    <div class="posters-layer">
+        <div class="poster" style="background:#e3f2fd;"><h3>BINARY</h3>01001001<br>01001111</div>
+        <div class="poster" style="background:#f1f8e9;"><h3>FLOWCHART</h3>[Start] → (Process)</div>
+        <div class="poster" style="background:#fff3e0;"><h3>PYTHON</h3>print("Hello")<br>if x > 5:</div>
+        <div class="poster" style="background:#f3e5f5;"><h3>LOGIC</h3>AND / OR<br>NOT / XOR</div>
+        <div class="poster" style="background:#ffebee;"><h3>AI</h3>Neural Nets<br>ML Models</div>
     </div>
 
-    <div class="left-controls">
-        <button class="box-btn" onclick="toggleSeating()">🪑 Arrange<br>Seating</button>
+    <!-- Top Right Status -->
+    <div id="status-area">
+        <div id="status-dot" class="online-logo"></div>
+        <span id="class-title-display">NO CLASS LOADED</span>
     </div>
 
-    <div class="board-wrapper" id="mainBoard">
-        <div id="boardText">
-            <h1 class="board-title">Mr. Gilbert</h1>
-            <h2 class="board-subtitle">Computing Class</h2>
-            <p id="activeClassDisplay">Status: Offline</p>
-        </div>
-        <div class="split-line" id="splitLine"></div>
-        <canvas id="drawingCanvas"></canvas>
-    </div>
-
-    <div class="right-controls">
-        <div class="timer-val" id="timeDisp">10:00</div>
+    <!-- Timer (Right) -->
+    <div class="timer-panel">
+        <div id="time-val" style="font-size: 30px; font-weight: bold;">10:00</div>
         <button onclick="startTimer()">Start</button>
         <button onclick="resetTimer()">Reset</button>
-        <img id="bellRing" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJtZzZ6Ynd6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx36T2CcV2/giphy.gif" style="width: 80px; margin-top:10px; display:none;">
+        <img id="bell-img" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJtZzZ6Ynd6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx36T2CcV2/giphy.gif">
     </div>
 
-    <div class="bottom-nav">
-        <div class="box-btn" onclick="manageClass()">📝 Class List<br>(Import)</div>
-        <div class="box-btn" onclick="toggleStatus()">🟢 Set<br>Online/Offline</div>
-        <div class="box-btn" onclick="pickName()">🎲 Random<br>Picker</div>
-        <div class="box-btn" onclick="initBoard('single')">🖋️ Single<br>Board</div>
-        <div class="box-btn" onclick="initBoard('split')">✂️ Split<br>Board</div>
-        <div class="box-btn" onclick="resetBoard()">🧹 Clear<br>Board</div>
-        <div class="box-btn" onclick="boardZoom(1.1)">🔍 Zoom In</div>
-        <div class="box-btn" onclick="boardZoom(0.9)">🔍 Zoom Out</div>
+    <!-- Central Board -->
+    <div class="main-stage" id="stage">
+        <div id="board">
+            <div id="intro-text" class="default-board-text">
+                <h1 class="chalk-title">Mr. Gilbert</h1>
+                <h2 style="font-size: 40px;">Computing Class</h2>
+            </div>
+            <canvas id="presentation-canvas"></canvas>
+            <canvas id="drawing-canvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Hover Dock Navigation -->
+    <div class="dock-container">
+        <div class="dock">
+            <div class="dock-btn" onclick="document.getElementById('file-in').click()">📁 LOAD<br>LECTURE</div>
+            <div class="dock-btn" onclick="importClass()">📋 IMPORT<br>CLASS</div>
+            <div class="dock-btn" onclick="toggleOnline()">🟢 GO<br>ONLINE</div>
+            <div class="dock-btn" onclick="pickStudent()">🎲 RANDOM<br>PICK</div>
+            <div class="dock-btn" onclick="setTool('pen')">🖊️ PEN</div>
+            <div class="dock-btn" onclick="setTool('highlighter')">🖍️ HIGHLIGHT</div>
+            <div class="dock-btn" onclick="setMode('single')">⬜ SINGLE</div>
+            <div class="dock-btn" onclick="setMode('split')">✂️ SPLIT</div>
+            <div class="dock-btn" onclick="clearBoard()">🧹 CLEAR</div>
+            <div class="dock-btn" onclick="openSeating()">🪑 SEATING</div>
+            <div class="dock-btn" onclick="changeZoom(1.1)">🔍 IN</div>
+            <div class="dock-btn" onclick="changeZoom(0.9)">🔍 OUT</div>
+        </div>
     </div>
 
     <!-- Seating Modal -->
-    <div id="seatingOverlay">
-        <h2 style="color:white; text-align:center;">Drag Tables (Max 35) - Board is Front</h2>
-        <div id="roomFloor" style="position:relative; width:100%; height:80%;"></div>
-        <div style="text-align:center;"><button onclick="toggleSeating()" style="padding:15px 40px;">Close & Save</button></div>
+    <div id="seating-modal">
+        <h2 style="color:white; text-align:center;">Drag Tables & Type Names</h2>
+        <div id="seating-area" style="position:relative; width:100%; height:80%;"></div>
+        <div style="text-align:center;"><button onclick="closeSeating()" style="padding:10px 50px;">CLOSE</button></div>
     </div>
 
-    <audio id="bellSnd" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+    <input type="file" id="file-in" style="display:none" accept="application/pdf">
+    <audio id="bell-sound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
 
     <script>
-        let timerSeconds = 600;
-        let timerInterval;
-        let isClassOnline = false;
-        let currentScale = 1;
-        let students = [];
+        // --- PDF Rendering Logic ---
+        const pdfInput = document.getElementById('file-in');
+        const pdfCanvas = document.getElementById('presentation-canvas');
+        const pdfCtx = pdfCanvas.getContext('2d');
 
-        // --- Class Status Logic ---
-        function toggleStatus() {
-            isClassOnline = !isClassOnline;
-            const display = document.getElementById('activeClassDisplay');
-            if(isClassOnline) {
-                display.innerHTML = '<span style="color:#00ff00">●</span> Class On-going';
-            } else {
-                display.innerHTML = 'Status: Offline';
+        pdfInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file.type !== 'application/pdf') return alert("Please upload a PDF (Convert PPT to PDF first)");
+            
+            document.getElementById('intro-text').style.display = 'none';
+            const reader = new FileReader();
+            reader.onload = async function() {
+                const loadingTask = pdfjsLib.getDocument({data: reader.result});
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({scale: 1.5});
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+                await page.render({canvasContext: pdfCtx, viewport: viewport}).promise;
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // --- Drawing Logic ---
+        const drawCanvas = document.getElementById('drawing-canvas');
+        const dCtx = drawCanvas.getContext('2d');
+        let painting = false;
+        let tool = 'pen';
+
+        function initDraw() {
+            drawCanvas.width = 900; drawCanvas.height = 500;
+            dCtx.lineCap = 'round';
+        }
+        initDraw();
+
+        function setTool(t) { tool = t; }
+
+        function setMode(m) {
+            clearBoard();
+            document.getElementById('intro-text').style.display = 'none';
+            if(m === 'split') {
+                dCtx.strokeStyle = "rgba(255,255,255,0.5)";
+                dCtx.beginPath(); dCtx.moveTo(450,0); dCtx.lineTo(450,500); dCtx.stroke();
             }
         }
 
-        function manageClass() {
-            let input = prompt("Enter student names (Vinschool ID), comma separated:", "Alex ID01, Ben ID02");
-            if(input) students = input.split(",");
+        drawCanvas.onmousedown = () => painting = true;
+        drawCanvas.onmouseup = () => { painting = false; dCtx.beginPath(); };
+        drawCanvas.onmousemove = (e) => {
+            if(!painting) return;
+            dCtx.lineWidth = tool === 'highlighter' ? 20 : 3;
+            dCtx.strokeStyle = tool === 'highlighter' ? 'rgba(255, 255, 0, 0.4)' : 'white';
+            dCtx.globalCompositeOperation = tool === 'highlighter' ? 'multiply' : 'source-over';
+            
+            dCtx.lineTo(e.offsetX, e.offsetY);
+            dCtx.stroke();
+        };
+
+        function clearBoard() { 
+            dCtx.clearRect(0,0,900,500); 
+            pdfCtx.clearRect(0,0,pdfCanvas.width,pdfCanvas.height);
+            document.getElementById('intro-text').style.display = 'flex';
         }
 
-        // --- Random Picker ---
-        function pickName() {
-            if(students.length === 0) return alert("Please import names first!");
-            let winner = students[Math.floor(Math.random() * students.length)];
-            alert("Selected Student: " + winner);
+        // --- Global Functions ---
+        let currentClass = [];
+        let zoom = 1;
+
+        function importClass() {
+            let name = prompt("Enter Class Section Name:", "7A Computing");
+            let list = prompt("Enter Students (Comma separated):", "Student 1, Student 2");
+            if(name) {
+                document.getElementById('class-title-display').innerText = name;
+                currentClass = list.split(",");
+            }
         }
 
-        // --- Timer Logic ---
+        function toggleOnline() {
+            const dot = document.getElementById('status-dot');
+            dot.classList.toggle('is-online');
+        }
+
+        function changeZoom(amt) {
+            zoom *= amt;
+            document.getElementById('stage').style.transform = `translate(-50%, -50%) scale(${zoom})`;
+        }
+
+        // --- Seating Logic ---
+        function openSeating() { document.getElementById('seating-modal').style.display = 'block'; }
+        function closeSeating() { document.getElementById('seating-modal').style.display = 'none'; }
+
+        function setupSeating() {
+            const area = document.getElementById('seating-area');
+            for(let i=0; i<35; i++) {
+                const d = document.createElement('div');
+                d.className = 'desk-2d';
+                d.style.left = (i%7)*120 + 50 + "px";
+                d.style.top = Math.floor(i/7)*100 + 50 + "px";
+                d.innerHTML = `🪑<input type="text" placeholder="Name">`;
+                
+                d.onmousedown = function(e) {
+                    if(e.target.tagName === 'INPUT') return;
+                    let sX = e.clientX - d.offsetLeft;
+                    let sY = e.clientY - d.offsetTop;
+                    document.onmousemove = (ev) => {
+                        d.style.left = ev.pageX - sX + 'px';
+                        d.style.top = ev.pageY - sY + 'px';
+                    }
+                    document.onmouseup = () => document.onmousemove = null;
+                }
+                area.appendChild(d);
+            }
+        }
+        setupSeating();
+
+        // --- Timer ---
+        let tSec = 600;
+        let tInt;
         function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timerSeconds--;
-                let m = Math.floor(timerSeconds/60);
-                let s = timerSeconds % 60;
-                document.getElementById('timeDisp').innerText = `${m}:${s<10?'0'+s:s}`;
-                if(timerSeconds <= 0) {
-                    clearInterval(timerInterval);
-                    document.getElementById('bellSnd').play();
-                    document.getElementById('bellRing').style.display = 'block';
+            clearInterval(tInt);
+            tInt = setInterval(() => {
+                tSec--;
+                let m = Math.floor(tSec/60); let s = tSec%60;
+                document.getElementById('time-val').innerText = `${m}:${s<10?'0'+s:s}`;
+                if(tSec <= 0) {
+                    clearInterval(tInt);
+                    document.getElementById('bell-sound').play();
+                    document.getElementById('bell-img').style.display = 'inline';
                 }
             }, 1000);
         }
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timerSeconds = 600;
-            document.getElementById('timeDisp').innerText = "10:00";
-            document.getElementById('bellRing').style.display = 'none';
+        function resetTimer() { 
+            clearInterval(tInt); tSec = 600; 
+            document.getElementById('time-val').innerText = "10:00"; 
+            document.getElementById('bell-img').style.display = 'none';
         }
 
-        // --- Board Zoom ---
-        function boardZoom(amt) {
-            currentScale *= amt;
-            document.getElementById('mainBoard').style.transform = `scale(${currentScale})`;
+        function pickStudent() {
+            if(currentClass.length === 0) return alert("Load class first!");
+            alert("Picked: " + currentClass[Math.floor(Math.random()*currentClass.length)]);
         }
-
-        // --- Drawing Board ---
-        const canv = document.getElementById('drawingCanvas');
-        const ctx = canv.getContext('2d');
-        let drawing = false;
-
-        function initBoard(mode) {
-            canv.style.display = 'block';
-            document.getElementById('boardText').style.opacity = '0.1';
-            canv.width = 850; canv.height = 480;
-            ctx.strokeStyle = "white"; ctx.lineWidth = 4;
-            document.getElementById('splitLine').style.display = (mode === 'split') ? 'block' : 'none';
-        }
-
-        function resetBoard() {
-            canv.style.display = 'none';
-            document.getElementById('boardText').style.opacity = '1';
-            document.getElementById('splitLine').style.display = 'none';
-            ctx.clearRect(0,0,850,480);
-        }
-
-        canv.onmousedown = () => drawing = true;
-        canv.onmouseup = () => { drawing = false; ctx.beginPath(); };
-        canv.onmousemove = (e) => {
-            if(!drawing) return;
-            ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke();
-        };
-
-        // --- Seating Logic ---
-        function toggleSeating() {
-            const overlay = document.getElementById('seatingOverlay');
-            overlay.style.display = (overlay.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function initDesks() {
-            const floor = document.getElementById('roomFloor');
-            for(let i=1; i<=35; i++) {
-                const d = document.createElement('div');
-                d.className = 'desk';
-                d.innerText = 'Desk ' + i;
-                d.style.left = (i % 7) * 110 + 100 + 'px';
-                d.style.top = Math.floor(i / 7) * 80 + 100 + 'px';
-                d.onmousedown = function(e) {
-                    let sX = e.clientX - d.getBoundingClientRect().left;
-                    let sY = e.clientY - d.getBoundingClientRect().top;
-                    document.onmousemove = (e) => {
-                        d.style.left = e.pageX - sX + 'px';
-                        d.style.top = e.pageY - sY + 'px';
-                    };
-                    document.onmouseup = () => document.onmousemove = null;
-                };
-                floor.appendChild(d);
-            }
-        }
-        initDesks();
     </script>
 </body>
 </html>
