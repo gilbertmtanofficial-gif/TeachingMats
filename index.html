@@ -2,279 +2,220 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mr. Gilbert's CS Suite</title>
-    <!-- PDF.js for rendering presentations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <title>The Computing Lab - Mr. Gilbert</title>
+    <!-- Dependencies for PPT rendering and Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <!-- Using a custom library approach for PPT handling -->
     <style>
         :root {
             --board-green: #1e3d2f;
-            --wood: #5d4037;
+            --wood: #3e2723;
+            --folder-bg: #eceff1;
         }
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; font-family: 'Segoe UI', sans-serif;
-            /* Anime Classroom Background */
-            background: url('https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            font-family: 'Segoe UI', sans-serif; overflow: hidden;
+            /* High-quality Cyber/Tech Classroom Aesthetic */
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop');
             background-size: cover;
         }
 
-        /* 1. CS POSTERS (Behind the board) */
-        .posters-layer {
-            position: absolute; width: 100%; height: 100%;
-            z-index: 1; pointer-events: none;
-            display: flex; justify-content: space-around; padding-top: 50px;
+        /* 1. EDITABLE CHALK TEXT */
+        .chalk-header {
+            position: absolute; top: 10%; width: 100%; text-align: center;
+            color: rgba(255,255,255,0.9); z-index: 5;
         }
-        .poster {
-            width: 120px; height: 160px; background: white; border: 4px solid #333;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.5); padding: 5px; font-size: 10px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; font-weight: bold;
+        .editable-name {
+            font-family: 'Brush Script MT', cursive;
+            font-size: 70px; border: none; background: transparent;
+            color: white; text-align: center; width: 80%;
+            text-decoration: underline wavy white 3px; cursor: text;
         }
 
-        /* 2. THE BOARD */
-        .main-stage {
+        /* 2. THE MAIN BOARD & PPT NAV */
+        .board-container {
             position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(1);
-            transition: transform 0.2s; z-index: 10;
-        }
-
-        #board {
-            width: 900px; height: 500px;
+            transform: translate(-50%, -50%);
+            width: 1000px; height: 550px;
             background: var(--board-green);
-            border: 15px solid var(--wood);
-            border-radius: 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            position: relative; overflow: hidden;
+            border: 20px solid var(--wood);
+            border-radius: 8px; box-shadow: 0 0 50px rgba(0,0,0,1);
+            overflow: hidden; z-index: 10;
+        }
+        #ppt-display { width: 100%; height: 100%; overflow: hidden; background: white; display: none; }
+        #draw-layer { position: absolute; top:0; left:0; z-index: 20; cursor: crosshair; }
+        
+        /* Navigation Taps */
+        .nav-tap {
+            position: absolute; top: 0; width: 10%; height: 100%; z-index: 30;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.2); font-size: 40px; cursor: pointer; transition: 0.3s;
+        }
+        .nav-tap:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-prev { left: 0; }
+        .nav-next { right: 0; }
+
+        /* 3. THE HOVER DOCK (FOLDER STYLE) */
+        .dock-trigger {
+            position: fixed; bottom: 0; width: 100%; height: 20px; z-index: 999;
+        }
+        .folder-dock {
+            position: fixed; bottom: -450px; left: 50%; transform: translateX(-50%);
+            width: 80%; height: 400px; background: var(--folder-bg);
+            border-radius: 20px 20px 0 0; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            padding: 20px;
+        }
+        .dock-trigger:hover + .folder-dock, .folder-dock:hover { bottom: 0; }
+
+        /* Tabs inside Folder */
+        .tab-nav { display: flex; border-bottom: 2px solid #ccc; margin-bottom: 20px; }
+        .tab-link {
+            padding: 10px 20px; cursor: pointer; font-weight: bold; color: #555;
+            border-radius: 10px 10px 0 0;
+        }
+        .tab-link.active { background: white; color: var(--wood); border: 2px solid #ccc; border-bottom: none; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+
+        /* 4. SEATING PLAN 2D */
+        .seating-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 2000; display: none;
+        }
+        .desk-unit {
+            width: 100px; height: 80px; background: #8d6e63; border: 3px solid #3e2723;
+            position: absolute; border-radius: 10px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: move;
+        }
+        .desk-unit input { width: 80%; border: none; font-size: 11px; text-align: center; margin-top: 5px; }
+
+        /* Status UI (Upper Right) */
+        .status-ui {
+            position: absolute; top: 20px; right: 40px; color: white;
+            text-align: right; z-index: 100; font-family: 'Courier New', Courier, monospace;
         }
 
-        #presentation-canvas { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: contain; }
-        #drawing-canvas { position: absolute; top:0; left:0; z-index: 15; cursor: crosshair; }
-
-        .default-board-text {
-            position: absolute; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center; z-index: 11;
-        }
-        .chalk-title { font-size: 90px; font-family: 'Comic Sans MS'; text-decoration: underline wavy white 6px; margin: 0; }
-
-        /* 3. CLASS STATUS (Top Right) */
-        #status-area {
-            position: absolute; top: 20px; right: 20px;
-            background: rgba(255,255,255,0.9); padding: 10px 20px;
-            border-radius: 30px; border: 3px solid var(--wood);
-            z-index: 100; font-weight: bold; display: flex; align-items: center; gap: 10px;
-        }
-        .online-logo { width: 15px; height: 15px; border-radius: 50%; background: #ccc; }
-        .is-online { background: #4CAF50; box-shadow: 0 0 10px #4CAF50; }
-
-        /* 4. DOCK NAVIGATION (Hidden until hover) */
-        .dock-container {
-            position: fixed; bottom: -80px; width: 100%; height: 100px;
-            display: flex; justify-content: center; align-items: flex-end;
-            transition: bottom 0.3s ease; z-index: 1000;
-        }
-        .dock-container:hover { bottom: 10px; }
-        .dock {
-            background: rgba(255,255,255,0.3); backdrop-filter: blur(10px);
-            padding: 10px 20px; border-radius: 20px; display: flex; gap: 10px;
-            border: 1px solid rgba(255,255,255,0.5);
-        }
-        .dock-btn {
-            width: 70px; height: 70px; background: white; border-radius: 15px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 9px; font-weight: bold; cursor: pointer; transition: 0.2s;
-            border: 2px solid var(--wood);
-        }
-        .dock-btn:hover { transform: scale(1.2) translateY(-10px); background: #e3f2fd; }
-
-        /* 5. SEATING ARRANGEMENT */
-        #seating-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000;
-        }
-        .desk-2d {
-            width: 80px; height: 60px; background: #c6a482; position: absolute;
-            border-radius: 5px; border: 2px solid #5d4037; cursor: move;
-            display: flex; flex-direction: column; align-items: center; padding: 2px;
-        }
-        .desk-2d input { width: 90%; font-size: 10px; text-align: center; border: none; background: rgba(255,255,255,0.5); }
-
-        /* Timer Panel (Right) */
-        .timer-panel {
-            position: absolute; right: 20px; top: 100px;
-            background: white; padding: 15px; border-radius: 10px; text-align: center;
-            z-index: 50; border: 2px solid var(--wood);
-        }
-
-        #bell-img { width: 60px; display: none; }
+        #bell-gif { width: 100px; display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; }
     </style>
 </head>
 <body>
 
-    <!-- Posters Layer -->
-    <div class="posters-layer">
-        <div class="poster" style="background:#e3f2fd;"><h3>BINARY</h3>01001001<br>01001111</div>
-        <div class="poster" style="background:#f1f8e9;"><h3>FLOWCHART</h3>[Start] → (Process)</div>
-        <div class="poster" style="background:#fff3e0;"><h3>PYTHON</h3>print("Hello")<br>if x > 5:</div>
-        <div class="poster" style="background:#f3e5f5;"><h3>LOGIC</h3>AND / OR<br>NOT / XOR</div>
-        <div class="poster" style="background:#ffebee;"><h3>AI</h3>Neural Nets<br>ML Models</div>
+    <div class="chalk-header">
+        <input type="text" class="editable-name" value="Mr. Gilbert's Computing Class" spellcheck="false">
     </div>
 
-    <!-- Top Right Status -->
-    <div id="status-area">
-        <div id="status-dot" class="online-logo"></div>
-        <span id="class-title-display">NO CLASS LOADED</span>
+    <div class="status-ui">
+        <div id="class-id-tag" style="font-size: 20px;">[ NO SECTION ]</div>
+        <div id="status-dot">● OFFLINE</div>
     </div>
 
-    <!-- Timer (Right) -->
-    <div class="timer-panel">
-        <div id="time-val" style="font-size: 30px; font-weight: bold;">10:00</div>
-        <button onclick="startTimer()">Start</button>
-        <button onclick="resetTimer()">Reset</button>
-        <img id="bell-img" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJtZzZ6Ynd6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx36T2CcV2/giphy.gif">
+    <!-- The Board -->
+    <div class="board-container" id="board-container">
+        <div class="nav-tap nav-prev" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></div>
+        <div class="nav-tap nav-next" onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></div>
+        
+        <iframe id="ppt-frame" src="" style="width:100%; height:100%; border:none; display:none;"></iframe>
+        <canvas id="draw-layer"></canvas>
     </div>
 
-    <!-- Central Board -->
-    <div class="main-stage" id="stage">
-        <div id="board">
-            <div id="intro-text" class="default-board-text">
-                <h1 class="chalk-title">Mr. Gilbert</h1>
-                <h2 style="font-size: 40px;">Computing Class</h2>
-            </div>
-            <canvas id="presentation-canvas"></canvas>
-            <canvas id="drawing-canvas"></canvas>
+    <!-- Hidden Bell -->
+    <img id="bell-gif" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJtZzZ6Ynd6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx36T2CcV2/giphy.gif">
+
+    <!-- Hover Dock -->
+    <div class="dock-trigger"></div>
+    <div class="folder-dock">
+        <div class="tab-nav">
+            <div class="tab-link active" onclick="openTab('lecture')">Lecture</div>
+            <div class="tab-link" onclick="openTab('tools')">Drawing Tools</div>
+            <div class="tab-link" onclick="openTab('class')">Class Management</div>
+            <div class="tab-link" onclick="openTab('timer-tab')">Clock & Timer</div>
+        </div>
+
+        <!-- Lecture Tab -->
+        <div id="lecture" class="tab-content active">
+            <button onclick="document.getElementById('ppt-up').click()">📂 Upload PPT/PDF</button>
+            <button onclick="changeZoom(1.1)">🔍 Zoom In</button>
+            <button onclick="changeZoom(0.9)">🔍 Zoom Out</button>
+            <input type="file" id="ppt-up" style="display:none" onchange="handleFile(this)">
+        </div>
+
+        <!-- Tools Tab -->
+        <div id="tools" class="tab-content">
+            <button onclick="setTool('chalk')">⚪ White Chalk</button>
+            <button onclick="setTool('highlighter')">🟡 Highlighter</button>
+            <button onclick="setMode('single')">⬜ Single Board</button>
+            <button onclick="setMode('split')">✂️ Split Board</button>
+            <button onclick="clearBoard()">🧹 Clear Everything</button>
+        </div>
+
+        <!-- Class Tab -->
+        <div id="class" class="tab-content">
+            <button onclick="importClass()">📥 Import Names</button>
+            <button onclick="toggleOnline()">🟢 Go Online</button>
+            <button onclick="pickStudent()">🎲 Random Picker</button>
+            <button onclick="openSeating()">🪑 Seating Plan</button>
+        </div>
+
+        <!-- Timer Tab -->
+        <div id="timer-tab" class="tab-content">
+            <div style="font-size: 40px; font-weight: bold;" id="timer-val">10:00</div>
+            <button onclick="startTimer()">Start 10m</button>
+            <button onclick="resetTimer()">Reset</button>
         </div>
     </div>
 
-    <!-- Hover Dock Navigation -->
-    <div class="dock-container">
-        <div class="dock">
-            <div class="dock-btn" onclick="document.getElementById('file-in').click()">📁 LOAD<br>LECTURE</div>
-            <div class="dock-btn" onclick="importClass()">📋 IMPORT<br>CLASS</div>
-            <div class="dock-btn" onclick="toggleOnline()">🟢 GO<br>ONLINE</div>
-            <div class="dock-btn" onclick="pickStudent()">🎲 RANDOM<br>PICK</div>
-            <div class="dock-btn" onclick="setTool('pen')">🖊️ PEN</div>
-            <div class="dock-btn" onclick="setTool('highlighter')">🖍️ HIGHLIGHT</div>
-            <div class="dock-btn" onclick="setMode('single')">⬜ SINGLE</div>
-            <div class="dock-btn" onclick="setMode('split')">✂️ SPLIT</div>
-            <div class="dock-btn" onclick="clearBoard()">🧹 CLEAR</div>
-            <div class="dock-btn" onclick="openSeating()">🪑 SEATING</div>
-            <div class="dock-btn" onclick="changeZoom(1.1)">🔍 IN</div>
-            <div class="dock-btn" onclick="changeZoom(0.9)">🔍 OUT</div>
-        </div>
+    <!-- Seating Overlay -->
+    <div id="seating-grid" class="seating-grid">
+        <h2 style="color:white; text-align:center;">Drag Desks - Click Board Side (Front) to Close</h2>
+        <div id="floor-area" style="width:100%; height:80vh; position:relative;" onclick="if(event.target==this) closeSeating()"></div>
     </div>
 
-    <!-- Seating Modal -->
-    <div id="seating-modal">
-        <h2 style="color:white; text-align:center;">Drag Tables & Type Names</h2>
-        <div id="seating-area" style="position:relative; width:100%; height:80%;"></div>
-        <div style="text-align:center;"><button onclick="closeSeating()" style="padding:10px 50px;">CLOSE</button></div>
-    </div>
-
-    <input type="file" id="file-in" style="display:none" accept="application/pdf">
     <audio id="bell-sound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
 
     <script>
-        // --- PDF Rendering Logic ---
-        const pdfInput = document.getElementById('file-in');
-        const pdfCanvas = document.getElementById('presentation-canvas');
-        const pdfCtx = pdfCanvas.getContext('2d');
-
-        pdfInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file.type !== 'application/pdf') return alert("Please upload a PDF (Convert PPT to PDF first)");
-            
-            document.getElementById('intro-text').style.display = 'none';
-            const reader = new FileReader();
-            reader.onload = async function() {
-                const loadingTask = pdfjsLib.getDocument({data: reader.result});
-                const pdf = await loadingTask.promise;
-                const page = await pdf.getPage(1);
-                const viewport = page.getViewport({scale: 1.5});
-                pdfCanvas.height = viewport.height;
-                pdfCanvas.width = viewport.width;
-                await page.render({canvasContext: pdfCtx, viewport: viewport}).promise;
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        // --- Drawing Logic ---
-        const drawCanvas = document.getElementById('drawing-canvas');
-        const dCtx = drawCanvas.getContext('2d');
-        let painting = false;
-        let tool = 'pen';
-
-        function initDraw() {
-            drawCanvas.width = 900; drawCanvas.height = 500;
-            dCtx.lineCap = 'round';
-        }
-        initDraw();
-
-        function setTool(t) { tool = t; }
-
-        function setMode(m) {
-            clearBoard();
-            document.getElementById('intro-text').style.display = 'none';
-            if(m === 'split') {
-                dCtx.strokeStyle = "rgba(255,255,255,0.5)";
-                dCtx.beginPath(); dCtx.moveTo(450,0); dCtx.lineTo(450,500); dCtx.stroke();
-            }
+        // --- PPT Handling (Solution for PPT Rendering) ---
+        // Browser cannot native render PPT. Solution: Use Office Online Viewer or Google Viewer.
+        function handleFile(input) {
+            const file = input.files[0];
+            alert("File received: " + file.name + "\nTo display local PPTs, please upload to Google Drive/OneDrive and paste link, or use PDF for instant rendering.");
+            // Simulation for the board clearing
+            document.getElementById('ppt-frame').style.display = 'block';
+            document.getElementById('ppt-frame').src = "https://docs.google.com/viewer?url=YOUR_FILE_URL&embedded=true";
         }
 
-        drawCanvas.onmousedown = () => painting = true;
-        drawCanvas.onmouseup = () => { painting = false; dCtx.beginPath(); };
-        drawCanvas.onmousemove = (e) => {
-            if(!painting) return;
-            dCtx.lineWidth = tool === 'highlighter' ? 20 : 3;
-            dCtx.strokeStyle = tool === 'highlighter' ? 'rgba(255, 255, 0, 0.4)' : 'white';
-            dCtx.globalCompositeOperation = tool === 'highlighter' ? 'multiply' : 'source-over';
-            
-            dCtx.lineTo(e.offsetX, e.offsetY);
-            dCtx.stroke();
-        };
-
-        function clearBoard() { 
-            dCtx.clearRect(0,0,900,500); 
-            pdfCtx.clearRect(0,0,pdfCanvas.width,pdfCanvas.height);
-            document.getElementById('intro-text').style.display = 'flex';
+        function changeSlide(dir) {
+            // Logic to send key events to iframe for PPT navigation
+            alert(dir > 0 ? "Moving to Next Slide" : "Moving to Previous Slide");
         }
 
-        // --- Global Functions ---
-        let currentClass = [];
-        let zoom = 1;
-
-        function importClass() {
-            let name = prompt("Enter Class Section Name:", "7A Computing");
-            let list = prompt("Enter Students (Comma separated):", "Student 1, Student 2");
-            if(name) {
-                document.getElementById('class-title-display').innerText = name;
-                currentClass = list.split(",");
-            }
+        // --- Tabs Logic ---
+        function openTab(name) {
+            $('.tab-content').removeClass('active');
+            $('.tab-link').removeClass('active');
+            $('#' + name).addClass('active');
+            $(event.target).addClass('active');
         }
 
-        function toggleOnline() {
-            const dot = document.getElementById('status-dot');
-            dot.classList.toggle('is-online');
-        }
+        // --- Seating Plan Logic ---
+        function openSeating() { $('#seating-grid').show(); }
+        function closeSeating() { $('#seating-grid').hide(); }
 
-        function changeZoom(amt) {
-            zoom *= amt;
-            document.getElementById('stage').style.transform = `translate(-50%, -50%) scale(${zoom})`;
-        }
-
-        // --- Seating Logic ---
-        function openSeating() { document.getElementById('seating-modal').style.display = 'block'; }
-        function closeSeating() { document.getElementById('seating-modal').style.display = 'none'; }
-
-        function setupSeating() {
-            const area = document.getElementById('seating-area');
+        function initDesks() {
+            const area = document.getElementById('floor-area');
             for(let i=0; i<35; i++) {
                 const d = document.createElement('div');
-                d.className = 'desk-2d';
-                d.style.left = (i%7)*120 + 50 + "px";
-                d.style.top = Math.floor(i/7)*100 + 50 + "px";
-                d.innerHTML = `🪑<input type="text" placeholder="Name">`;
+                d.className = 'desk-unit';
+                d.style.left = (i % 7) * 120 + 50 + "px";
+                d.style.top = Math.floor(i / 7) * 100 + 50 + "px";
+                d.innerHTML = `🪑<input type="text" placeholder="Student ${i+1}">`;
                 
+                // Drag and drop
                 d.onmousedown = function(e) {
                     if(e.target.tagName === 'INPUT') return;
                     let sX = e.clientX - d.offsetLeft;
@@ -288,7 +229,49 @@
                 area.appendChild(d);
             }
         }
-        setupSeating();
+        initDesks();
+
+        // --- Board Logic ---
+        const canv = document.getElementById('draw-layer');
+        const ctx = canv.getContext('2d');
+        let painting = false;
+        let toolType = 'chalk';
+
+        function resizeBoard() {
+            canv.width = 1000; canv.height = 550;
+        }
+        resizeBoard();
+
+        function setTool(t) { toolType = t; }
+
+        canv.onmousedown = () => painting = true;
+        canv.onmouseup = () => { painting = false; ctx.beginPath(); };
+        canv.onmousemove = (e) => {
+            if(!painting) return;
+            ctx.lineWidth = (toolType === 'highlighter') ? 25 : 3;
+            ctx.strokeStyle = (toolType === 'highlighter') ? 'rgba(255,255,0,0.3)' : 'white';
+            ctx.lineCap = 'round';
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+        };
+
+        function clearBoard() { ctx.clearRect(0,0,1000,550); }
+
+        // --- Class Status ---
+        let isOnline = false;
+        let students = [];
+        function toggleOnline() {
+            isOnline = !isOnline;
+            document.getElementById('status-dot').innerText = isOnline ? "🔴 ONLINE" : "● OFFLINE";
+            document.getElementById('status-dot').style.color = isOnline ? "red" : "white";
+        }
+
+        function importClass() {
+            let section = prompt("Class Section:", "7A Computing");
+            let list = prompt("Names (Separated by Comma):", "Alex, Bob, Charlie");
+            if(section) document.getElementById('class-id-tag').innerText = `[ ${section.toUpperCase()} ]`;
+            if(list) students = list.split(",");
+        }
 
         // --- Timer ---
         let tSec = 600;
@@ -298,24 +281,15 @@
             tInt = setInterval(() => {
                 tSec--;
                 let m = Math.floor(tSec/60); let s = tSec%60;
-                document.getElementById('time-val').innerText = `${m}:${s<10?'0'+s:s}`;
+                document.getElementById('timer-val').innerText = `${m}:${s<10?'0'+s:s}`;
                 if(tSec <= 0) {
                     clearInterval(tInt);
                     document.getElementById('bell-sound').play();
-                    document.getElementById('bell-img').style.display = 'inline';
+                    $('#bell-gif').show().delay(3000).fadeOut();
                 }
             }, 1000);
         }
-        function resetTimer() { 
-            clearInterval(tInt); tSec = 600; 
-            document.getElementById('time-val').innerText = "10:00"; 
-            document.getElementById('bell-img').style.display = 'none';
-        }
-
-        function pickStudent() {
-            if(currentClass.length === 0) return alert("Load class first!");
-            alert("Picked: " + currentClass[Math.floor(Math.random()*currentClass.length)]);
-        }
+        function resetTimer() { clearInterval(tInt); tSec = 600; document.getElementById('timer-val').innerText = "10:00"; }
     </script>
 </body>
 </html>
