@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Gilbert's Computing Class</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <div class="top-nav">
+        <div class="nav-left">
+            <h2>Mr. Gilbert's Computing Class</h2>
+        </div>
+        <div class="nav-center">
+            <button id="presentationBtn" class="nav-btn">
+                <span>📄</span> Upload Presentation
+            </button>
+            <input type="file" id="fileInput" accept=".pdf,.ppt,.pptx" style="display: none;">
+        </div>
+        <div class="nav-right">
+            <button id="fullscreenBtn" class="nav-btn">Fullscreen</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="classroom-container">
+        <!-- Left Panel - Seating Arrangement -->
+        <div class="left-panel">
+            <button id="seatingBtn" class="panel-btn">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIgMmwtMSAxdjE4bDEgMSAxLTFWM2wtMS0xem0tNiA2djhoNHYtOGgtNHptMTAgMHY4aDR2LThoLTR6Ii8+PC9zdmc+" alt="Seating">
+                Seating Arrangement
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Chalkboard -->
+            <div class="chalkboard" id="chalkboard">
+                <div class="chalk-frame" id="chalkFrame">
+                    <h1 class="teacher-name">Mr. Gilbert</h1>
+                    <div class="underline"></div>
+                    <h2 class="class-subject">Computing Class</h2>
+                </div>
+                
+                <!-- Presentation Display -->
+                <div id="presentationDisplay" class="presentation-display" style="display: none;">
+                    <div class="presentation-controls">
+                        <button id="zoomIn">🔍+</button>
+                        <button id="zoomOut">🔍-</button>
+                        <button id="resetZoom">⚪</button>
+                        <button id="closePresentationBtn">✕</button>
+                        <span id="zoomLevel">100%</span>
+                    </div>
+                    <div id="presentationContent" class="presentation-content">
+                        <iframe id="presentationFrame" style="display: none;"></iframe>
+                        <canvas id="pdfCanvas" style="display: none;"></canvas>
+                        <div id="pdfControls" class="pdf-controls" style="display: none;">
+                            <button id="prevPage">← Prev</button>
+                            <span id="pageInfo">Page 1 of 1</span>
+                            <button id="nextPage">Next →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <!-- Class List Management -->
+                <div class="class-section">
+                    <h3>Class Management</h3>
+                    <div class="class-controls">
+                        <button id
